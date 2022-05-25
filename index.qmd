@@ -1,0 +1,23 @@
+# Preface {.unnumbered}
+
+Preface
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      #fig.path = "img/",
+					  fig.pos = "H")
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), "RJDemetra", "rJava", "rmarkdown"
+), 'packages.bib')
+
+lapply(c(
+  'RJDemetra', 'knitr', 'kableExtra'
+  ), function(pkg) {
+    if (!require(pkg,character.only=TRUE)){
+    	install.packages(pkg)
+    	require(pkg,character.only=TRUE)
+    } 
+  }
+)
+```

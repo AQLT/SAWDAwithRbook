@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.449">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Seasonal adjustment with R - 3&nbsp; Linearisation with TRAMO and RegARIMA models</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<link href="./05-seasonaladjustment.html" rel="next">
+<link href="./02-literature.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link id="quarto-text-highlighting-styles" href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+    <div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Linearisation with TRAMO and RegARIMA models</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Seasonal adjustment with R</a> 
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-intro.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-literature.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Brief history of seasonal adjustment methods</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-linearisation.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Linearisation with TRAMO and RegARIMA models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-seasonaladjustment.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Seasonal adjustment</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./summary.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Summary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./9999-references.html" class="sidebar-item-text sidebar-link">References</a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#pre-def-est" id="toc-pre-def-est" class="nav-link active" data-scroll-target="#pre-def-est"> <span class="header-section-number">3.1</span> Estimate a pre-defined RegARIMA and seasonal adjustment model</a></li>
+  <li><a href="#working-day-adjustment" id="toc-working-day-adjustment" class="nav-link" data-scroll-target="#working-day-adjustment"> <span class="header-section-number">3.2</span> working day adjustment</a></li>
+  <li><a href="#other-adjustment-outliers-etc." id="toc-other-adjustment-outliers-etc." class="nav-link" data-scroll-target="#other-adjustment-outliers-etc."> <span class="header-section-number">3.3</span> other adjustment (outliers, etc.)</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span id="sec:pre-adjustment" class="quarto-section-identifier d-none d-lg-block"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Linearisation with TRAMO and RegARIMA models</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header>
+
+<p>As mentioned before, the <strong>first step</strong> of seasonal adjustment consists of pre-adjusting the time series by removing from it the deterministic effects like outliers, calendar and regression effects. This step estimates also the missing observations, as well as produces forecasts and backasts of the pre-adjusted series which allows applying linear filters at both ends of the series in the decomposition part of the seasonal adjustment. All this is achieved with a <strong>RegARIMA</strong> model (model with ARIMA errors) as specified below.</p>
+<p><span class="math display">\[z_t=y_t\beta+x_t\]</span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(z_t\)</span> - is the original series;</li>
+<li><span class="math inline">\(\beta = (\beta_1,\dots,\beta_n)\)</span> - a vector of regression coefficients;</li>
+<li><span class="math inline">\(y_t = (y_{1t},\dots,y_{nt})\)</span> - <span class="math inline">\(n\)</span> regression variables (outliers, calendar effects, user-defined variables);</li>
+<li><span class="math inline">\(x_t\)</span> - a disturbance that follows the general ARIMA process:</li>
+<li><span class="math inline">\(\phi(B)\delta(B)x_t=\theta(B)a_t\)</span>; <span class="math inline">\(\phi(B), \delta(B)\)</span> and <span class="math inline">\(\theta(B)\)</span> are the finite polynomials in <span class="math inline">\(B\)</span>; <span class="math inline">\(a_t\)</span> is a white-noise variable with zero mean and a constant variance.</li>
+</ul>
+<p>The polynomial <span class="math inline">\(\phi(B)\)</span> is a stationary autoregressive (AR) polynomial in <span class="math inline">\(B\)</span>, which is a product of the stationary regular AR polynomial in <span class="math inline">\(B\)</span> and the stationary seasonal polynomial in <span class="math inline">\(B^s\)</span>:</p>
+<p><span class="math display">\[\phi(B)=\phi_p(B)\Phi_{bp}(B^s)=(1+\phi_1B+\dots+\phi_pB^p)(1+\Phi_1B^s+\dots+\Phi_{bp}B^{bps})\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(p\)</span> - number of regular AR terms (in the package and in JDemetra+ <span class="math inline">\(p \le 3\)</span>);</li>
+<li><span class="math inline">\(bp\)</span> - number of seasonal AR terms (in the package and in JDemetra+ <span class="math inline">\(bp \le 1\)</span>);</li>
+<li><span class="math inline">\(s\)</span> - number of observations per year (frequency of the time series).</li>
+</ul>
+<p>The polynomial <span class="math inline">\(\theta(B)\)</span> is an invertible moving average (MA) polynomial in <span class="math inline">\(B\)</span>, which is a product of the invertible regular MA polynomial in <span class="math inline">\(B\)</span> and the invertible seasonal MA polynomial in <span class="math inline">\(B^s\)</span>:</p>
+<p><span class="math display">\[\theta(B)=\theta_q(B)\Theta_{bq}(B^s)=(1+\theta_1B+\dots+\theta_qB^q)(1+\Theta_1B^s+\dots+\Theta_{bq}B^{bqs})\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(q\)</span> - number of regular MA terms (in the package and in JDemetra+ <span class="math inline">\(q \le 3\)</span>);</li>
+<li><span class="math inline">\(bq\)</span> - number of seasonal MA terms (in the package and in JDemetra+ <span class="math inline">\(bq \le 1\)</span>);</li>
+</ul>
+<p>The polynomial <span class="math inline">\(\delta(B)\)</span> is the non-stationary AR polynomial in <span class="math inline">\(B\)</span> (unit roots):</p>
+<p><span class="math display">\[\delta(B)=(1-B)^d(1-B^s)^{d_s}\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(d\)</span> - regular differencing order (in the package and in JDemetra+ <span class="math inline">\(d \le 1\)</span>);</li>
+<li><span class="math inline">\(d_s\)</span> - seasonal differencing order (in the package and in JDemetra+ <span class="math inline">\(d_s \le 1\)</span>);</li>
+</ul>
+<p>Furthermore, in this step an automatic modelling is implemented (in both methods) to: determine the decomposition of the series, detect outliers and calendar effects and to adjust residuals to an ARIMA models. A detailed description can be found in <span class="citation" data-cites="gomez1998automatic">Gómez and Maravall (<a href="9999-references.html#ref-gomez1998automatic" role="doc-biblioref">1998</a>)</span>.</p>
+<section id="pre-def-est" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="pre-def-est"><span class="header-section-number">3.1</span> Estimate a pre-defined RegARIMA and seasonal adjustment model</h2>
+<p>As in JDemetra+, RJDemetra allows to perform seasonal adjustment using pre-defined model specifications that are the most common specifications and are recommended to users for the start of their analysis. They are separately defined for TRAMO-SEATS and X-13ARIMA methods. It is also possible to perform only the first step of seasonal adjustment; i.e.&nbsp;the RegARIMA estimation. The pre-defined model specifications are described in detail in tables @ref(tab:pre-def-ts) and @ref(tab:pre-def-x13). They are identical for pre-adjustment (column 1) and for seasonal adjustment (column 2). The settings described in tables @ref(tab:pre-def-ts) and @ref(tab:pre-def-x13) refer to:</p>
+<ul>
+<li>Transformation: test to choose between an additive decomposition (no transformation) and a multiplicative decomposition (logarithmic transformation).<br>
+</li>
+<li>Pre-adjustment for leap-year (not available for TRAMO): in the case of a multiplicative decomposition a correction of the February values is applied to the original series (before transformation). The original values in February are multiplied by <span class="math inline">\(\frac{28.25}{29}\)</span> for leap years, by <span class="math inline">\(\frac{28.25}{28}\)</span> for non-leap years and values for other months are not modified. In the case of multiplicative models, this is equivalent to adding a leap year regressor <span class="citation" data-cites="bell1992lengthmonthadj">(<a href="9999-references.html#ref-bell1992lengthmonthadj" role="doc-biblioref">Bell 1992</a>)</span>.<br>
+</li>
+<li>Working days/trading days: test for the presence of working day/trading day effects. In TRAMO an automatic choice between working days and trading days regressors is done with “RSAFull”.<br>
+</li>
+<li>Easter: pre-test for the presence of the Easter effect. For TRAMO-SEATS the default length of the Easter effect is 6 days and for X-13ARIMA an automatic detection of the duration is done (1, 8 or 15 days).<br>
+</li>
+<li>Outliers: an automatic identification of three types of outliers: AO (additive outlier), LS (level shift) and TC (transitory change), using a default critical value. The automatic identification of SO (seasonal outlier) is not enabled by default.<br>
+</li>
+<li>ARIMA model: the choice between fixing the ARIMA model structure to (0,1,1)(0,1,1) (Airline model) or searching for ARIMA model orders using an automatic model identification procedure. The Airline model is used as a default model in several TRAMO-SEATS and X-13ARIMA specifications as it has been shown in several studies that it is appropriate in many cases for real seasonal monthly or a quarterly time series. Moreover, the Airline model approximates well many other models and provides an excellent “benchmark” model <span class="citation" data-cites="maravall2009identification">(<a href="9999-references.html#ref-maravall2009identification" role="doc-biblioref">Maravall 2009</a>)</span>.</li>
+</ul>
+<div class="cell-output-display">
+
+<table class="table" style="font-size: 7px; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">Pre-defined specification for TRAMO and TRAMO-SEATS</caption>
+ <thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">Specification</div></th>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="7"></th>
+</tr>
+  <tr>
+   <th style="text-align:center;"> TRAMO </th>
+   <th style="text-align:center;"> TRAMO-SEATS </th>
+   <th style="text-align:center;"> Trans-formation </th>
+   <th style="text-align:center;"> Pre-adjust-ment for leap-year </th>
+   <th style="text-align:center;"> Working days </th>
+   <th style="text-align:center;"> Trading days </th>
+   <th style="text-align:center;"> Easter effect </th>
+   <th style="text-align:center;"> Outliers </th>
+   <th style="text-align:center;"> ARIMA model </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:center;"> TR0 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA0 </td>
+   <td style="text-align:center;width: 1.cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TR1 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA1 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TR2 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA2 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TR3 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA3 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TR4 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA4 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 1.5cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TR5 </td>
+   <td style="text-align:center;width: 1.cm; "> RSA5 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> yes </td>
+   <td style="text-align:center;width: 1.5cm; "> test (Standard) </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> TRfull (default) </td>
+   <td style="text-align:center;width: 1.cm; "> RSAfull (default) </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> yes </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 1.5cm; "> test (Include Easter) </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<div class="cell-output-display">
+
+<table class="table" style="font-size: 7px; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">Pre-defined specification for RegARIMA and X-13ARIMA</caption>
+ <thead>
+<tr>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">Specification</div></th>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="7"></th>
+</tr>
+  <tr>
+   <th style="text-align:center;"> RegARIMA </th>
+   <th style="text-align:center;"> X-13ARIMA </th>
+   <th style="text-align:center;"> Trans-formation </th>
+   <th style="text-align:center;"> Pre-adjust-ment for leap-year </th>
+   <th style="text-align:center;"> Working days </th>
+   <th style="text-align:center;"> Trading days </th>
+   <th style="text-align:center;"> Easter effect </th>
+   <th style="text-align:center;"> Outliers </th>
+   <th style="text-align:center;"> ARIMA model </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:center;"> RG0 </td>
+   <td style="text-align:center;width: 1.7cm; ">  </td>
+   <td style="text-align:center;width: 1.cm; "> no </td>
+   <td style="text-align:center;width: 1.4cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> RG1 </td>
+   <td style="text-align:center;width: 1.7cm; "> RSA1 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.4cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> RG2c </td>
+   <td style="text-align:center;width: 1.7cm; "> RSA2c </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.4cm; "> test </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> (0,1,1)(0,1,1) </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> RG3 </td>
+   <td style="text-align:center;width: 1.7cm; "> RSA3 </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.4cm; "> no </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> RG4c </td>
+   <td style="text-align:center;width: 1.7cm; "> RSA4c </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.4cm; "> test </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+  <tr>
+   <td style="text-align:center;"> RG5c (default) </td>
+   <td style="text-align:center;width: 1.7cm; "> RSA5 (default) </td>
+   <td style="text-align:center;width: 1.cm; "> test </td>
+   <td style="text-align:center;width: 1.4cm; "> test </td>
+   <td style="text-align:center;width: 1.cm; width: 0.9cm; "> no </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;width: 0.9cm; "> test </td>
+   <td style="text-align:center;"> AMI </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<p>To estimate a model with a pre-defined specification the following four functions can be used in RJDemetra:</p>
+<ul>
+<li>RegARIMA
+<ul>
+<li>X-13ARIMA method: <code>regarima_x13()</code></li>
+<li>TRAMO-SEATS method: <code>regarima_tramoseats()</code></li>
+</ul></li>
+<li>Seasonal adjustment
+<ul>
+<li>X-13ARIMA method: <code>x13()</code><br>
+</li>
+<li>TRAMO-SEATS method: <code>tramoseats()</code></li>
+</ul></li>
+</ul>
+<p>Where the second argument refers to model specifications as described in table @ref(tab:pre_def_ts) and @ref(tab:pre_def_x13).</p>
+<p>For example:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RJDemetra)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>myseries <span class="ot">&lt;-</span> ipi_c_eu[, <span class="st">"FR"</span>]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>regx13 <span class="ot">&lt;-</span> <span class="fu">regarima_x13</span>(myseries, <span class="at">spec =</span> <span class="st">"RG5c"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>regts <span class="ot">&lt;-</span> <span class="fu">regarima_tramoseats</span>(myseries, <span class="at">spec =</span> <span class="st">"TRfull"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>sax13 <span class="ot">&lt;-</span> <span class="fu">x13</span>(myseries, <span class="at">spec =</span> <span class="st">"RSA3"</span>, <span class="at">userdefined =</span> <span class="cn">NULL</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>sats <span class="ot">&lt;-</span> <span class="fu">tramoseats</span>(myseries, <span class="at">spec =</span> <span class="st">"RSAfull"</span>, <span class="at">userdefined =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>As mentioned before the model specifications can be modified by users, including the possibility to incorporate user-defined regressors. <!-- How to do it is described in section \ref{user-def-spec}. --></p>
+</section>
+<section id="working-day-adjustment" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="working-day-adjustment"><span class="header-section-number">3.2</span> working day adjustment</h2>
+<p>principles, create a calendar</p>
+</section>
+<section id="other-adjustment-outliers-etc." class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="other-adjustment-outliers-etc."><span class="header-section-number">3.3</span> other adjustment (outliers, etc.)</h2>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-bell1992lengthmonthadj" class="csl-entry" role="doc-biblioentry">
+Bell, William Robert. 1992. <span>“Alternative Approaches to Length of Month Adjustment.”</span> <em>Statistical Research Division. US Bureau of the Census Statistical Research Division Report Number: Census/SRD/RR</em> 92 (01). <a href="https://www.census.gov/srd/papers/pdf/rr92-17.pd">https://www.census.gov/srd/papers/pdf/rr92-17.pd</a>.
+</div>
+<div id="ref-gomez1998automatic" class="csl-entry" role="doc-biblioentry">
+Gómez, Víctor, and Agustin Maravall. 1998. <span>“Automatic Modeling Methods for Univariate Series.”</span> Working Papers 9608. Banco de España. <a href="https://EconPapers.repec.org/RePEc:bde:wpaper:9808">https://EconPapers.repec.org/RePEc:bde:wpaper:9808</a>.
+</div>
+<div id="ref-maravall2009identification" class="csl-entry" role="doc-biblioentry">
+Maravall, Agustin. 2009. <span>“Identification of Reg-ARIMA Models and of Problematic Series in Large Scale Applications Program TSW (TRAMO-SEATS for Windows),”</span> July. <a href="https://www.bde.es/f/webbde/SES/servicio/Programas_estadisticos_y_econometricos/Notas_introductorias_TRAMO_SEATS/ficheros/Large_Scale_TSW.pdf">https://www.bde.es/f/webbde/SES/servicio/Programas_estadisticos_y_econometricos/Notas_introductorias_TRAMO_SEATS/ficheros/Large_Scale_TSW.pdf</a>.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./02-literature.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Brief history of seasonal adjustment methods</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./05-seasonaladjustment.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Seasonal adjustment</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

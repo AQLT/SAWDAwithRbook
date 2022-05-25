@@ -1,0 +1,61 @@
+# Introduction {#intro}
+
+## Seasonality and seasonal adjustment
+
+Since the 20th century, more and more infra-annual statistics are produced, especially by national institutes, to analyse the short-term evolution of economies. It is for example the case of the gross domestic product (GDP), unemployment rate, household consumption of goods and industrial production indices. 
+However, most of those time series are affected by seasonal and trading days effects. 
+A seasonal effect is an effect that occurs in the same calendar month with similar magnitude and direction from year to year. 
+For instance, automobile production is usually lower during summer, due to holidays, and chocolate sales are usually higher in December, due to Christmas. 
+Trading days effect appears when a time series is affected by calendar month’s weekday composition. 
+For example retail sales are usually higher on Saturday, thus it is likely that they will be higher in months with a surplus of weekend days.
+
+Seasonal and trading days effects can hamper the analysis of infra-annual movements of a time series or the spatial comparison. 
+This is the reason why time series are often seasonally and trading days adjusted, where seasonal adjustment is the process of removing the effects of seasonal and trading day fluctuations.
+
+
+## JDemetra+ and RJDemetra
+
+JDemetra+ is a tool for seasonal adjustment (SA) developed by the National Bank of Belgium (NBB) in cooperation with the Deutsche Bundesbank and Eurostat in accordance with the Guidelines of the European Statistical System (ESS) [@eurostat2015guidelines]. 
+It implements the concepts and algorithms used in the two leading seasonal adjustment methods: TRAMO-SEATS and X-13ARIMA. Those methods have been re-engineered using an object-oriented approach that facilitates estimations handling, extensions and modifications.
+
+JDemetra+ has been [officially recommended](https://ec.europa.eu/eurostat/cros/system/files/Jdemetra_%20release.pdf), since 2 February 2015, to the members of the ESS and the European System of Central Banks as software for seasonal and calendar adjustment of official statistics.
+
+Besides seasonal adjustment, JDemetra+ bundles other time series models that are useful in the production and analysis of economic statistics, including outlier detection, nowcasting, temporal disaggregation or benchmarking. 
+More details on the methodology used in JDemetra+ can be found in the JDemetra+ manuals and user guides [@grudkowska2015jdemetrarm; @grudkowska2015jdemetraug].
+
+The package RJDemetra [@R-RJDemetra] provides an R interface to the seasonal adjustment software JDemetra+. 
+RJDemetra uses Java libraries of JDemetra+, therefore relies on the 
+rJava [@R-rJava] package. 
+Consequently Java SE 8 or later versions are required. The package allows to:
+
+* perform seasonal adjustment with TRAMO-SEATS and X-13ARIMA with pre-defined and user-defined specifications;  
+* access all outputs available in JDemetra+;  
+* import and export JDemetra+ workspaces.
+
+It can be installed from CRAN:
+
+```{r, eval= FALSE}
+install.packages("RJDemetra")
+```
+
+
+## Dataset
+
+The package RJDemetra includes the `sts_inpr_m` database of the Eurostat, which contains monthly industrial production indices in manufacturing for the European Union. 
+It contains 37 time series from January 1990 to December 2017 which are considered to be affected by seasonal and trading days effects. 
+The data are `ts` objects and can be accessed using the `ipi_c_eu` object. 
+The following snippet of code plots the industrial production index of the euro area (EA19):
+
+```{r basic_raw_data_plot}
+library("RJDemetra")
+plot(ipi_c_eu[, "FR"])
+```
+
+
+## Print styling
+
+By default, a colour styling is used for the `print` methods of the objects created by `RJDemetra`. It can causes troubles with some outputs --- for example with `rmarkdown` [@R-rmarkdown] --- and can be disabled in each `print` function with the argument `enable_print_style = FALSE` or setting the global option `enable_print_style` to `FALSE`:
+
+```{r}
+options(enable_print_style = FALSE)
+```

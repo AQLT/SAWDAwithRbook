@@ -1,0 +1,43 @@
+# Seasonal adjustment
+
+seasonal adjustment, create a specification, main indicators
+
+
+## Decomposition with X-11 {#subsec:saX11}
+
+In this step, the pre-adjusted series ($y$) is decomposed into the following components: trend-cycle ($t$), seasonal component ($s$) and irregular component ($i$), where the decomposition can be: 
+
+* additive ($y = t + s + i$);  
+* multiplicative ($y = t \times s \times i$);  
+* log-additive ($\log(y) = \log(t) + \log(s) + \log(i)$);  
+* pseudo-additive ($y = t \times (s + i - 1)$). 
+
+In X-11, which is an iterative non-parametric method, the decomposition is achieved by means of linear filters [@findleyx12; @ladiray1999x11en].
+The basic procedure consists of a simple 3-step algorithm:
+ 
+1) Estimate the trend by means of moving averages; 
+2) Remove the trend and leave the seasonal and irregular components; 
+3) Estimate the seasonal component using moving averages.
+
+At each step, the program selects a moving average among a large set of predefined smoothers, according to the characteristics of the series.
+X-11 also incorporates an automatic detection and correction of (additive) outliers to make the use of linear filters more robust.
+
+
+## Decomposition with SEATS {#subsec:saSeats}
+
+SEATS is a program for decomposing time series into their unobserved components following an ARIMA model that extracts from a time series its different signals [@gomez1996programs; @caporello2004program]. The decomposition can be:
+
+* additive or ;
+* multiplicative (equivalent to an additive model after taking the logarithm).
+
+SEATS decomposes the linearized series into the following components:
+
+- **trend-cycle component:** captures the low-frequency variation of the series and displays a spectral peak at frequency 0;  
+- **seasonal component:** captures the spectral peaks at seasonal frequencies;  
+- **irregular component:** captures erratic, white-noise behaviour, and hence has a flat spectrum;  
+- **transitory component:** a zero-mean stationary component that picks up transitory fluctuations that should not contaminate the trend-cycle or seasonal component and are not white-noise.
+
+The components are determined and fully derived from the structure of the ARIMA model for the observed series.
+
+The decomposition assumes orthogonal components, and each one will have in turn an ARIMA expression. In order to identify the components, it is required that (except for the irregular one) they are clean of noise. This is called the "canonical" property, and implies that no additive white noise can be extracted from a component that is not the irregular one. In this way, the variance of the irregular component is maximized, and the trend-cycle and seasonal component are kept as stable as possible (compatible with the stochastic nature of model). 
+

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-0.9.449">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Seasonal adjustment with R - 4&nbsp; Seasonal adjustment</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<link href="./summary.html" rel="next">
+<link href="./04-linearisation.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link id="quarto-text-highlighting-styles" href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+    <div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Seasonal adjustment</span></h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Seasonal adjustment with R</a> 
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">Preface</a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-intro.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-literature.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Brief history of seasonal adjustment methods</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-linearisation.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Linearisation with TRAMO and RegARIMA models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-seasonaladjustment.html" class="sidebar-item-text sidebar-link active"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Seasonal adjustment</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./summary.html" class="sidebar-item-text sidebar-link"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Summary</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./9999-references.html" class="sidebar-item-text sidebar-link">References</a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#subsec:saX11" id="toc-subsec:saX11" class="nav-link active" data-scroll-target="#subsec\:saX11"> <span class="header-section-number">4.1</span> Decomposition with X-11</a></li>
+  <li><a href="#subsec:saSeats" id="toc-subsec:saSeats" class="nav-link" data-scroll-target="#subsec\:saSeats"> <span class="header-section-number">4.2</span> Decomposition with SEATS</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Seasonal adjustment</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header>
+
+<p>seasonal adjustment, create a specification, main indicators</p>
+<section id="subsec:saX11" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="subsec:saX11"><span class="header-section-number">4.1</span> Decomposition with X-11</h2>
+<p>In this step, the pre-adjusted series (<span class="math inline">\(y\)</span>) is decomposed into the following components: trend-cycle (<span class="math inline">\(t\)</span>), seasonal component (<span class="math inline">\(s\)</span>) and irregular component (<span class="math inline">\(i\)</span>), where the decomposition can be:</p>
+<ul>
+<li>additive (<span class="math inline">\(y = t + s + i\)</span>);<br>
+</li>
+<li>multiplicative (<span class="math inline">\(y = t \times s \times i\)</span>);<br>
+</li>
+<li>log-additive (<span class="math inline">\(\log(y) = \log(t) + \log(s) + \log(i)\)</span>);<br>
+</li>
+<li>pseudo-additive (<span class="math inline">\(y = t \times (s + i - 1)\)</span>).</li>
+</ul>
+<p>In X-11, which is an iterative non-parametric method, the decomposition is achieved by means of linear filters <span class="citation" data-cites="findleyx12 ladiray1999x11en">(<a href="9999-references.html#ref-findleyx12" role="doc-biblioref">Findley et al. 1998</a>; <a href="9999-references.html#ref-ladiray1999x11en" role="doc-biblioref">Ladiray and Quenneville 2001</a>)</span>. The basic procedure consists of a simple 3-step algorithm:</p>
+<ol type="1">
+<li>Estimate the trend by means of moving averages;</li>
+<li>Remove the trend and leave the seasonal and irregular components;</li>
+<li>Estimate the seasonal component using moving averages.</li>
+</ol>
+<p>At each step, the program selects a moving average among a large set of predefined smoothers, according to the characteristics of the series. X-11 also incorporates an automatic detection and correction of (additive) outliers to make the use of linear filters more robust.</p>
+</section>
+<section id="subsec:saSeats" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="subsec:saSeats"><span class="header-section-number">4.2</span> Decomposition with SEATS</h2>
+<p>SEATS is a program for decomposing time series into their unobserved components following an ARIMA model that extracts from a time series its different signals <span class="citation" data-cites="gomez1996programs caporello2004program">(<a href="9999-references.html#ref-gomez1996programs" role="doc-biblioref">Gómez and Maravall 1996</a>; <a href="9999-references.html#ref-caporello2004program" role="doc-biblioref">Caporello and Maravall 2004</a>)</span>. The decomposition can be:</p>
+<ul>
+<li>additive or ;</li>
+<li>multiplicative (equivalent to an additive model after taking the logarithm).</li>
+</ul>
+<p>SEATS decomposes the linearized series into the following components:</p>
+<ul>
+<li><strong>trend-cycle component:</strong> captures the low-frequency variation of the series and displays a spectral peak at frequency 0;<br>
+</li>
+<li><strong>seasonal component:</strong> captures the spectral peaks at seasonal frequencies;<br>
+</li>
+<li><strong>irregular component:</strong> captures erratic, white-noise behaviour, and hence has a flat spectrum;<br>
+</li>
+<li><strong>transitory component:</strong> a zero-mean stationary component that picks up transitory fluctuations that should not contaminate the trend-cycle or seasonal component and are not white-noise.</li>
+</ul>
+<p>The components are determined and fully derived from the structure of the ARIMA model for the observed series.</p>
+<p>The decomposition assumes orthogonal components, and each one will have in turn an ARIMA expression. In order to identify the components, it is required that (except for the irregular one) they are clean of noise. This is called the “canonical” property, and implies that no additive white noise can be extracted from a component that is not the irregular one. In this way, the variance of the irregular component is maximized, and the trend-cycle and seasonal component are kept as stable as possible (compatible with the stochastic nature of model).</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography" style="display: none">
+<div id="ref-caporello2004program" class="csl-entry" role="doc-biblioentry">
+Caporello, Gianluca, and Agustin Maravall. 2004. <span>“Program <span>TSW</span>: <span>R</span>evised Reference Manual.”</span> {T}echnical {R}eport, {R}esearch {D}epartment. Banco de España. <a href="https://www.bde.es/f/webbde/SES/Secciones/Publicaciones/PublicacionesSeriadas/DocumentosOcasionales/04/Fic/do0408e.pdf">https://www.bde.es/f/webbde/SES/Secciones/Publicaciones/PublicacionesSeriadas/DocumentosOcasionales/04/Fic/do0408e.pdf</a>.
+</div>
+<div id="ref-findleyx12" class="csl-entry" role="doc-biblioentry">
+Findley, David F., Brian C. Monsell, William R. Bell, Mark C. Otto, and Bor-Chung Chen. 1998. <span>“New Capabilities and Methods of the <span>X</span>-12-<span>ARIMA</span> Seasonal-Adjustment Program.”</span> <em>Journal of Business &amp; Economic Statistics</em> 16 (2): 127–52. <a href="http://www.jstor.org/stable/1392565">http://www.jstor.org/stable/1392565</a>.
+</div>
+<div id="ref-gomez1996programs" class="csl-entry" role="doc-biblioentry">
+Gómez, Víctor, and Agustin Maravall. 1996. <span>“Programs TRAMO and SEATS. Instructions for the User.”</span> Working Papers 9628. Banco de España.
+</div>
+<div id="ref-ladiray1999x11en" class="csl-entry" role="doc-biblioentry">
+Ladiray, Dominique, and Benoit Quenneville. 2001. <em>Seasonal Adjustment with the x-11 Method</em>. Berlin; New York: Springer-Verlag Inc.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./04-linearisation.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Linearisation with TRAMO and RegARIMA models</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./summary.html" class="pagination-link">
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Summary</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

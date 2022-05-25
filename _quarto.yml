@@ -1,0 +1,26 @@
+project:
+  type: book
+
+book:
+  title: "Seasonal adjustment with R"
+  author: "Alain Quartier-la-Tente"
+  date: "24/05/2022"
+  chapters:
+    - index.qmd
+    - 01-intro.qmd
+    - 02-literature.qmd
+    - 04-linearisation.qmd
+    - 05-seasonaladjustment.qmd
+    - summary.qmd
+    - 9999-references.qmd
+
+bibliography: [book.bib, packages.bib]
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+
+editor: visual
+

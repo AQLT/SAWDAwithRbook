@@ -1,0 +1,156 @@
+# Linearisation with TRAMO and RegARIMA models {#sec:pre-adjustment}
+
+
+As mentioned before, the **first step** of seasonal adjustment consists of pre-adjusting the time series by removing from it the deterministic effects like outliers, calendar and regression effects. 
+This step estimates also the missing observations, as well as produces forecasts and backasts of the pre-adjusted series which allows applying linear filters at both ends of the series in the decomposition part of the seasonal adjustment. 
+All this is achieved with a **RegARIMA** model (model with ARIMA errors) as specified below. 
+
+$$z_t=y_t\beta+x_t$$
+where
+
+* $z_t$ - is the original series;
+* $\beta = (\beta_1,\dots,\beta_n)$ - a vector of regression coefficients;
+* $y_t = (y_{1t},\dots,y_{nt})$ - $n$ regression variables (outliers, calendar effects, user-defined variables);
+* $x_t$ - a disturbance that follows the general ARIMA process:
+* $\phi(B)\delta(B)x_t=\theta(B)a_t$; $\phi(B), \delta(B)$ and $\theta(B)$ are the finite polynomials in $B$; $a_t$ is a white-noise variable with zero mean and a constant variance.
+
+ The polynomial $\phi(B)$ is a stationary autoregressive (AR) polynomial in $B$, which is a product of the stationary regular AR polynomial in $B$ and the stationary seasonal polynomial in $B^s$:
+
+$$\phi(B)=\phi_p(B)\Phi_{bp}(B^s)=(1+\phi_1B+\dots+\phi_pB^p)(1+\Phi_1B^s+\dots+\Phi_{bp}B^{bps})$$
+
+ where:
+
+* $p$ - number of regular AR terms (in the package and in JDemetra+ $p \le 3$);
+* $bp$ - number of seasonal AR terms (in the package and in JDemetra+ $bp \le 1$);
+* $s$ - number of observations per year (frequency of the time series).
+ 
+ The polynomial $\theta(B)$ is an invertible moving average (MA) polynomial in $B$, which is a product of the invertible regular MA polynomial in $B$ and the invertible seasonal MA polynomial in $B^s$:
+
+ $$\theta(B)=\theta_q(B)\Theta_{bq}(B^s)=(1+\theta_1B+\dots+\theta_qB^q)(1+\Theta_1B^s+\dots+\Theta_{bq}B^{bqs})$$
+
+ where:
+
+* $q$ - number of regular MA terms (in the package and in JDemetra+ $q \le 3$);
+* $bq$ - number of seasonal MA terms (in the package and in JDemetra+ $bq \le 1$);
+
+
+The polynomial $\delta(B)$ is the non-stationary AR polynomial in $B$ (unit roots):
+
+$$\delta(B)=(1-B)^d(1-B^s)^{d_s}$$
+
+ where:
+
+* $d$ - regular differencing order (in the package and in JDemetra+ $d \le 1$);
+* $d_s$ - seasonal differencing order (in the package and in JDemetra+ $d_s \le 1$);
+
+Furthermore, in this step an automatic modelling is implemented (in both methods) to: determine the decomposition of the series, detect outliers and calendar effects and to adjust residuals to an ARIMA models. 
+A detailed description can be found in @gomez1998automatic.
+
+
+## Estimate a pre-defined RegARIMA and seasonal adjustment model {#pre-def-est}
+
+As in JDemetra+, RJDemetra allows to perform seasonal adjustment using pre-defined model specifications that are the most common specifications and are recommended to users for the start of their analysis. 
+They are separately defined for TRAMO-SEATS and X-13ARIMA methods. 
+It is also possible to perform only the  first step of seasonal adjustment; i.e. the RegARIMA estimation. 
+The pre-defined model specifications are described in detail in tables \@ref(tab:pre-def-ts) and \@ref(tab:pre-def-x13). 
+They are identical for pre-adjustment (column 1) and for seasonal adjustment (column 2). 
+The settings described in tables \@ref(tab:pre-def-ts) and \@ref(tab:pre-def-x13) refer to:
+
+* Transformation: test to choose between an additive decomposition (no transformation) and a multiplicative decomposition (logarithmic transformation).  
+* Pre-adjustment for leap-year (not available for TRAMO): in the case of a multiplicative decomposition a correction of the February values is applied to the original series (before transformation). 
+The original values in February are multiplied by $\frac{28.25}{29}$ for leap years, by $\frac{28.25}{28}$  for non-leap years and values for other months are not modified. 
+In the case of multiplicative models, this is equivalent to adding a leap year regressor [@bell1992lengthmonthadj].  
+* Working days/trading days: test for the presence of working day/trading day effects. 
+In TRAMO an automatic choice between working days and trading days regressors is done with "RSAFull".  
+* Easter: pre-test for the presence of  the Easter effect. 
+For TRAMO-SEATS the default length of the Easter effect is 6 days and for X-13ARIMA an automatic detection of the duration is done (1, 8 or 15 days).  
+* Outliers: an automatic identification of three types of outliers: AO (additive outlier), LS (level shift) and TC (transitory change), using a default critical value. 
+The automatic identification of SO (seasonal outlier) is not enabled by default.  
+* ARIMA model: the choice between fixing the ARIMA model structure to (0,1,1)(0,1,1) (Airline model) or searching for ARIMA model orders using an automatic model identification procedure.
+The Airline model is used as a default model in several TRAMO-SEATS and X-13ARIMA specifications as it has been shown in several studies that it is appropriate in many cases for real seasonal monthly or a quarterly time series. 
+Moreover, the Airline model approximates well many other models and provides an excellent "benchmark" model [@maravall2009identification].
+
+
+```{r pre-def-ts, echo=FALSE, results='asis'}
+library(kableExtra)
+pre_def_spec_ts <- structure(list(TRAMO = c("TR0", "TR1", "TR2", "TR3", "TR4", "TR5", 
+"TRfull (default)"), `TRAMO-SEATS` = c("RSA0", "RSA1", "RSA2", "RSA3", 
+"RSA4", "RSA5", "RSAfull (default)"), `Trans-formation` = c("no", "test", 
+"test", "test", "test", "test", "test"), `Pre-adjust-ment for leap-year` = c("no", 
+"no", "no", "no", "no", "no", "yes"), `Working days` = c("no", 
+"no", "test", "no", "test", "no", "test"), `Trading days` = c("no", 
+"no", "no", "no", "no", "yes", "test"), `Easter effect` = c("no", 
+"no", "test", "no", "test", "test (Standard)", "test (Include Easter)"
+), Outliers = c("no", "test", "test", "test", "test", "test", 
+"test"), `ARIMA model` = c("(0,1,1)(0,1,1)", "(0,1,1)(0,1,1)", 
+"(0,1,1)(0,1,1)", "AMI", "AMI", "AMI", "AMI")), class = "data.frame", row.names = c(NA, 
+-7L))
+pre_def_spec_x13 <- structure(list(RegARIMA = c("RG0", "RG1", "RG2c", "RG3", "RG4c", 
+"RG5c (default)"), `X-13ARIMA` = c("", "RSA1", "RSA2c", "RSA3", 
+"RSA4c", "RSA5 (default)"), `Trans-formation` = c("no", "test", "test", 
+"test", "test", "test"), `Pre-adjust-ment for leap-year` = c("no", 
+"no", "test", "no", "test", "test"), `Working days` = c("no", 
+"no", "test", "no", "test", "no"), `Trading days` = c("no", "no", 
+"no", "no", "no", "test"), `Easter effect` = c("no", "no", "test", 
+"no", "test", "test"), Outliers = c("no", "test", "test", "test", 
+"test", "test"), `ARIMA model` = c("(0,1,1)(0,1,1)", "(0,1,1)(0,1,1)", 
+"(0,1,1)(0,1,1)", "AMI", "AMI", "AMI")), class = "data.frame", row.names = c(NA, 
+-6L))
+
+kable(pre_def_spec_ts, booktabs = T, caption = "Pre-defined specification for TRAMO and TRAMO-SEATS",align = "c") %>%
+  column_spec(c(2,3,5), width = "1.cm") %>%
+  column_spec(c(5,6,8), width = "0.9cm") %>% 
+  column_spec(c(4,7), width = "1.5cm") %>% 
+  kable_styling(font_size = 7) %>% 
+  add_header_above(c("Specification"=2, " " = 7))
+```
+
+```{r pre-def-x13, echo=FALSE, results='asis'}
+kable(pre_def_spec_x13, booktabs = T, caption = "Pre-defined specification for RegARIMA and X-13ARIMA", align = "c") %>%
+  column_spec(c(3,5), width = "1.cm") %>%
+  column_spec(c(5,6,7,8), width = "0.9cm")%>% 
+  column_spec(c(2), width = "1.7cm") %>% 
+  column_spec(c(4), width = "1.4cm") %>% 
+  kable_styling(font_size = 7) %>% 
+  add_header_above(c("Specification"=2, " " = 7))
+```
+
+
+To estimate a model with a pre-defined specification the following four functions can be used in RJDemetra:
+
+* RegARIMA
+  + X-13ARIMA method: `regarima_x13()` 
+  + TRAMO-SEATS method: `regarima_tramoseats()`
+  
+* Seasonal adjustment
+  + X-13ARIMA method: `x13()`  
+  + TRAMO-SEATS method: `tramoseats()`
+
+Where the second argument refers to model specifications as described in table \@ref(tab:pre_def_ts) and \@ref(tab:pre_def_x13). 
+
+For example:
+
+```{r}
+library(rjd3x13)
+library(rjd3tramoseats)
+y = rjd3toolkit::ABS$X0.2.09.10.M
+regx13 <- regarima(y, spec = "RG5c")
+sats <- tramo(y)
+```
+
+As mentioned before the model specifications can be modified by users, including the possibility to incorporate user-defined regressors. 
+<!-- How to do it is described in section \ref{user-def-spec}. -->
+
+## working day adjustment
+principles, create a calendar
+
+## other adjustment (outliers, etc.)
+
+
+## Pre-adjustment tests
+
+### Transformation
+
+Additive/log
+
+
